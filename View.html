@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Camera Viewer</title>
+
+  <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+
+  <style>
+    body {
+      margin: 0;
+      padding: 25px 20px;
+      background: #101522;
+      color: white;
+      font-family: Arial, sans-serif;
+      text-align: center;
+    }
+
+    input {
+      width: 90%;
+      max-width: 400px;
+      padding: 14px;
+      margin: 20px 0;
+      border: 0;
+      border-radius: 10px;
+      font-size: 16px;
+      box-sizing: border-box;
+    }
+
+    button {
+      padding: 14px 25px;
+      border: 0;
+      border-radius: 10px;
+      background: #4d7cff;
+      color: white;
+      font-size: 16px;
+    }
+
+    video {
+      display: block;
+      width: 100%;
+      max-width: 600px;
+      margin: 25px auto;
+      border-radius: 15px;
+      background: black;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h1> Camera Viewer</h1>
+
+  <p>Camera ID ထည့်ပါ</p>
+
+  <input
+    id="cameraId"
+    placeholder="Enter Camera ID"
+  >
+
+  <br>
+
+  <button onclick="connectCamera()">
+    Connect
+  </button>
+
+  <video
+    id="remoteVideo"
+    autoplay
+    playsinline
+  ></video>
+
+<script>
+
+const peer = new Peer();
+
+
+// Camera ကို request လုပ်ခြင်း
+function connectCamera() {
+
+  const cameraId =
+    document.getElementById("cameraId")
+      .value
+      .trim();
+
+  if (!cameraId) {
+
+    alert("Camera ID ထည့်ပါ");
+    return;
+  }
+
+
+  const connection =
+    peer.connect(cameraId);
+
+
+  connection.on("open", function() {
+
+    connection.send({
+      type: "request-stream",
+      viewerId: peer.id
+    });
+
+  });
+
+
+  connection.on("error", function(error) {
+
+    console.error(error);
+
+    alert("Camera နဲ့ connection မရပါ");
+
+  });
+
+}
+
+
+// Camera က stream ပို့လာတဲ့အခါ
+peer.on("call", function(call) {
+
+  call.answer();
+
+
+  call.on("stream", function(remoteStream) {
+
+    const video =
+      document.getElementById("remoteVideo");
+
+    video.srcObject = remoteStream;
+
+    video.play().catch(function(error) {
+      console.log(error);
+    });
+
+  });
+
+
+  call.on("close", function() {
+
+    document.getElementById("remoteVideo")
+      .srcObject = null;
+
+  });
+
+});
+
+</script>
+
+</body>
+</html>
